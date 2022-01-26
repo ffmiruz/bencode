@@ -6,12 +6,14 @@ import (
 )
 
 func TestDecodeBasic(t *testing.T) {
-	ctl := "l4:spami23ee"
+	// ["spam", 23, ["eggs", -9999]]
+	ctl := "l4:spami23el4:eggsi-9999eee"
 	r := strings.NewReader(ctl)
 
-	var str string
-	var num int
-	list := []interface{}{str, num}
+	var str, str2 string
+	var num, num2 int
+	innerList := []interface{}{str2, num2}
+	list := []interface{}{str, num, innerList}
 	dec := NewDecoder(r)
 	err := dec.Decode(&list)
 	if err != nil {

@@ -49,15 +49,26 @@ func (d *Decoder) decodeList(list *[]interface{}) error {
 	l := *list
 	// fill in the slice
 	for i := range l {
-		switch l[i].(type) {
+		switch value := l[i].(type) {
 		case int:
 			var num int
-			d.decode(&num)
+			err = d.decode(&num)
+			if err != nil {
+				return err
+			}
 			l[i] = num
 		case string:
 			var str string
-			d.decode(&str)
+			err = d.decode(&str)
+			if err != nil {
+				return err
+			}
 			l[i] = str
+		case []interface{}:
+			err = d.decodeList(&value)
+			if err != nil {
+				return err
+			}
 		}
 	}
 	// consume "e"
