@@ -2,6 +2,7 @@
 package bencode
 
 import (
+	"bytes"
 	"errors"
 	"io"
 	"sort"
@@ -86,4 +87,15 @@ func (e *Encoder) encodeDict(v map[string]interface{}) error {
 	e.w.Write([]byte("e"))
 
 	return nil
+}
+
+// Marshal returns bencode encoding of v in bytes.
+func Marshal(v interface{}) ([]byte, error) {
+	w := new(bytes.Buffer)
+	e := NewEncoder(w)
+	err := e.Encode(v)
+	if err != nil {
+		return nil, err
+	}
+	return w.Bytes(), nil
 }
