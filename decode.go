@@ -60,14 +60,15 @@ func (d *Decoder) decodeDict(dict *map[string]interface{}) error {
 	}
 	keys.Sort()
 
-	for _, _ = range keys {
-		var key string
-		err = d.decodeString(&key)
+	for _, key := range keys {
+		// consume bytes of key from input reader, do nothing with it.
+		var _dump string
+		err = d.decodeString(&_dump)
 		if err != nil {
 			return err
 		}
 
-		switch obj[key].(type) {
+		switch v := obj[key].(type) {
 		case string:
 			var str string
 			d.decode(&str)
@@ -76,6 +77,9 @@ func (d *Decoder) decodeDict(dict *map[string]interface{}) error {
 			var num int
 			d.decode(&num)
 			obj[key] = num
+		case []interface{}:
+			d.decode(&v)
+			obj[key] = v
 		default:
 			return errors.New("v points to invalid type to decode to")
 		}
