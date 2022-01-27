@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"errors"
 	"io"
+	"sort"
 	"strconv"
 )
 
@@ -25,17 +26,66 @@ func (d *Decoder) Decode(v interface{}) error {
 }
 
 func (d *Decoder) decode(v interface{}) error {
+	var err error
 	switch value := v.(type) {
-	case *interface{}:
 	case *int:
-		d.decodeInt(value)
+		err = d.decodeInt(value)
 	case *string:
-		d.decodeString(value)
+		err = d.decodeString(value)
 	case *[]interface{}:
-		d.decodeList(value)
+		err = d.decodeList(value)
+	case *map[string]interface{}:
+		err = d.decodeDict(value)
 	default:
-		return errors.New("invalid type to decode to")
+		return errors.New("v points to invalid type to decode to")
 	}
+
+	return err
+}
+
+func (d *Decoder) decodeDict(dict *map[string]interface{}) error {
+	// consume "d"
+	_, err := d.rd.Discard(1)
+	if err != nil {
+		return err
+	}
+	obj := *dict
+
+	// grab all keys into a slice and sort it.
+	keys := make(sort.StringSlice, len(obj))
+	i := 0
+	for key := range obj {
+		keys[i] = key
+		i++
+	}
+	keys.Sort()
+
+	for _, _ = range keys {
+		var key string
+		err = d.decodeString(&key)
+		if err != nil {
+			return err
+		}
+
+		switch obj[key].(type) {
+		case string:
+			var str string
+			d.decode(&str)
+			obj[key] = str
+		case int:
+			var num int
+			d.decode(&num)
+			obj[key] = num
+		default:
+			return errors.New("v points to invalid type to decode to")
+		}
+	}
+	// consume "e"
+	_, err = d.rd.Discard(1)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -66,6 +116,11 @@ func (d *Decoder) decodeList(list *[]interface{}) error {
 			l[i] = str
 		case []interface{}:
 			err = d.decodeList(&value)
+			if err != nil {
+				return err
+			}
+		case map[string]interface{}:
+			err = d.decodeDict(&value)
 			if err != nil {
 				return err
 			}
