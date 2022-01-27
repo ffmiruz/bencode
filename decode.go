@@ -80,6 +80,9 @@ func (d *Decoder) decodeDict(dict *map[string]interface{}) error {
 		case []interface{}:
 			d.decode(&v)
 			obj[key] = v
+		case map[string]interface{}:
+			d.decode(&v)
+			obj[key] = v
 		default:
 			return errors.New("v points to invalid type to decode to")
 		}
